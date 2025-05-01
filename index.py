@@ -14,15 +14,17 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    homepage = "<h1>周攸晨's Python網頁(+8)</h1>"
-    homepage += "<a href='/mis'>MIS</a><br>"
-    homepage += "<a href='/today'>顯示日期時間</a><br>"
-    homepage += "<a href='/welcome?nick=yoyo&work=pu'>傳送使用者暱稱</a><br>"
-    homepage += "<a href='/account'>網頁表單傳值</a><br>"
-    homepage += "<a href='/about'>yoyo's簡介網頁</a><br>"
+    homepage = "<h1>周攸晨Python網頁(時間+8)webhook2</h1>"
+    homepage += "<a href=/mis>MIS</a><br>"
+    homepage += "<a href=/today>顯示日期時間</a><br>"
+    homepage += "<a href=/welcome?nick=Yoyo&work=pu>傳送使用者暱稱</a><br>"
+    homepage += "<a href=/account>網頁表單傳值</a><br>"
+    homepage += "<a href=/about>簡介網頁</a><br>"
     homepage += "<br><a href=/read>讀取Firestore資料</a><br>"
-    homepage += "<br><a href=/movie>讀取開眼電影即將上映影片，寫入Firestore</a><br>"
-
+    homepage += "<br><a href=/spider>爬取開演即將上映電影,存到資料庫</a><br>"
+    homepage += "<br><a href=/Dispmovie>輸入關鍵字查詢電影</a><br>"
+    homepage += "<br><a href=/accident>輸入關鍵字查詢114年2月台中十大易肇事路口</a><br>"
+    homepage += "<br><a href=/webhook>我的webhook</a><br>"
     return homepage
 
 @app.route("/mis")
@@ -36,7 +38,7 @@ def today():
     return render_template("today.html", datetime=str(now))
 
 @app.route("/about")
-def about():
+def me():
     return render_template("about.html")
 
 @app.route("/welcome", methods=["GET"])
@@ -54,67 +56,144 @@ def account():
         return result
     else:
         return render_template("account.html")
+
 @app.route("/read")
 def read():
     Result = ""
     db = firestore.client()
-    collection_ref = db.collection("靜宜資管")    
-    docs = collection_ref.order_by("mail", direction=firestore.Query.ASCENDING).limit(5).get()   
-    for doc in docs:         
-        Result += "文件內容：{}".format(doc.to_dict()) + "<br>"    
+    collection_ref = db.collection("靜宜資管")
+    docs = collection_ref.order_by("mail").get()
+    for doc in docs:
+        Result += "文件內容：{}".format(doc.to_dict()) + "<br>"
     return Result
 
-@app.route("/movie")
-def movie():
+@app.route("/spider")
+def spider():
+    db = firestore.client()
     url = "http://www.atmovies.com.tw/movie/next/"
     Data = requests.get(url)
     Data.encoding = "utf-8"
     sp = BeautifulSoup(Data.text, "html.parser")
     result = sp.select(".filmListAllX li")
-    lastUpdate = sp.find("div", class_="smaller09").text[5:]
 
     for item in result:
-        picture = item.find("img").get("src").replace(" ", "")
-        title = item.find("div", class_="filmtitle").text
-        movie_id = item.find("div", class_="filmtitle").find("a").get("href").replace("/", "").replace("movie", "")
-        hyperlink = "http://www.atmovies.com.tw" + item.find("div", class_="filmtitle").find("a").get("href")
-        show = item.find("div", class_="runtime").text.replace("上映日期：", "")
-        show = show.replace("片長：", "")
-        show = show.replace("分", "")
-        showDate = show[0:10]
-        showLength = show[13:]
+        img = item.find("img")
+        a = item.find("a")
+        div = item.find(class_="runtime")
+
+        if div.text.find("片長") > 0:
+            FilmLen = div.text[21:]
+        else:
+            FilmLen = "無"
 
         doc = {
-            "title": title,
-            "picture": picture,
-            "hyperlink": hyperlink,
-            "showDate": showDate,
-            "showLength": showLength,
-            "lastUpdate": lastUpdate
+            "title": img.get("alt"),
+            "hyperlink": "http://www.atmovies.com.tw" + a.get("href"),
+            "picture": img.get("src"),
+            "showDate": div.text[5:15],
+            "ShowLength": FilmLen
         }
 
-        db = firestore.client()
-        doc_ref = db.collection("電影").document(movie_id)
+        doc_ref = db.collection("電影").document(a.get("href")[7:19])
         doc_ref.set(doc)
-    return "近期上映電影已爬蟲及存檔完畢，網站最近更新日期為：" + lastUpdate
 
-@app.route("/searchQ", methods=["POST","GET"])
-def searchQ():
+    return "資料庫已更新"
+
+@app.route("/input", methods=["GET", "POST"])
+def input():
     if request.method == "POST":
-        MovieTitle = request.form["MovieTitle"]
-        info = ""
+        keyword = request.form["MovieKeyword"]
         db = firestore.client()
-        collection_ref = db.collection("電影")
-        docs = collection_ref.order_by("showDate").get()
-        for doc in docs:
-            if MovieTitle in doc.to_dict()["title"]:
-                info += "片名：" + doc.to_dict()["title"] + "<br>"
-                info += "影片介紹：" + doc.to_dict()["hyperlink"] + "<br>"
-                info += "片長：" + doc.to_dict()["showLength"] + " 分鐘<br>"
-                info += "上映日期：" + doc.to_dict()["showDate"] + "<br><br>"
+        docs = db.collection("周攸晨").order_by("showDate").get()
+        info = ""
+
+        for item in docs:
+            if keyword in item.to_dict()["title"]:
+                info += "片名:<a href=" + item.to_dict()["hyperlink"] + ">" + item.to_dict()["title"] + "</a><br>"
+                info += "介紹:" + item.to_dict()["hyperlink"] + "<br>"
+                info += "海報:<img src=" + item.to_dict()["picture"] + "><br>"
+                info += "片長:" + item.to_dict()["ShowLength"] + "<br>"
+                info += "上映日期:" + item.to_dict()["showDate"] + "<br><br>"
         return info
     else:
-        return render_template("input.html")
+        return render_template("movie.html")
+
+# ✅ accident 已改：加上「查無資料」提示 + 顯示全部按鈕 + 隱藏功能
+@app.route("/accident", methods=["GET", "POST"])
+def accident():
+    url = "https://datacenter.taichung.gov.tw/swagger/OpenData/1289c779-6efa-4e7c-bac8-aa6cbe84a58c"
+    try:
+        Data = requests.get(url, verify=False)
+        JsonData = json.loads(Data.text)
+    except Exception as e:
+        return f"<h3>資料取得失敗：</h3>{str(e)}"
+
+    keyword = ""
+    info = ""
+    result_html = ""
+    found = False
+
+    if request.method == "POST":
+        keyword = request.form.get("RoadKeyword", "").strip()
+
+        if keyword == "all":
+            matched = JsonData
+            info += f"<h2>📋 顯示所有事故路段：</h2><br>"
+            found = True
+        else:
+            matched = [item for item in JsonData if keyword in item["路口名稱"]]
+            if matched:
+                info += f"<h2>🔍 查詢結果 - 包含「{keyword}」的路口：</h2><br>"
+                found = True
+            else:
+                info += f"<h3>❌ 找不到包含「{keyword}」的路口</h3>"
+
+        for item in matched:
+            result_html += f"🚧 <b>事故路口：</b>{item['路口名稱']}<br>"
+            result_html += f"📊 <b>發生件數：</b>{item['總件數']}<br>"
+            result_html += f"💥 <b>主要肇因：</b>{item['主要肇因']}<br><br>"
+
+    html = """
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>台中事故路口查詢</title>
+        <script>
+            function toggleDisplay() {
+                var resultDiv = document.getElementById("result");
+                var btn = document.getElementById("toggleBtn");
+                if (resultDiv.style.display === "none") {
+                    resultDiv.style.display = "block";
+                    btn.value = "👁️ 隱藏查詢結果";
+                } else {
+                    resultDiv.style.display = "none";
+                    btn.value = "👁️ 顯示查詢結果";
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>🚦 台中市 114 年 2 月十大易肇事路口</h1>
+        <form method='POST'>
+            🔍 請輸入路口名稱關鍵字：<input type='text' name='RoadKeyword'>
+            <input type='submit' value='查詢'>
+        </form>
+
+        <form method='POST' style='margin-top:10px;'>
+            <input type='hidden' name='RoadKeyword' value='all'>
+            <input type='submit' value='📋 顯示所有資料'>
+        </form>
+    """
+
+    if info:
+        html += """
+        <br>
+        <input type="button" id="toggleBtn" onclick="toggleDisplay()" value="👁️ 隱藏查詢結果">
+        <div id="result" style="margin-top:10px;">
+        """ + info + result_html + "</div>"
+
+    html += "</body></html>"
+    return html
 @app.route("/rate")
 def rate():
     url = "http://www.atmovies.com.tw/movie/next/"
@@ -168,30 +247,35 @@ def rate():
         doc_ref = db.collection("電影含分級").document(movie_id)
         doc_ref.set(doc)
     return "近期上映電影已爬蟲及存檔完畢，網站最近更新日期為：" + lastUpdate
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
+    # build a request object
     req = request.get_json(force=True)
+    # fetch queryResult from json
     action =  req.get("queryResult").get("action")
     #msg =  req.get("queryResult").get("queryText")
     #info = "動作：" + action + "； 查詢內容：" + msg
-    if (action =="rateChoice"):
+
+    if (action == "rateChoice"):
         rate = req.get("queryResult").get("parameters").get("rate")
-        info = "我是周攸晨開發的聊天機器人，您選擇的電影分級是：" + rate + ", 相關電影:\n"
+        info = "您選擇的電影分級是:" + rate +", 相關電影:\n"
         db = firestore.client()
-        collections_ref = db.collection("電影含分級")
-        docs = collections_ref.get()
+        collection_ref = db.collection("電影含分級")
+        docs = collection_ref.get()
         result = ""
         for doc in docs:
             dict = doc.to_dict()
             if rate in dict["rate"]:
-                result += "片名：" + dict["title"] + "\n"
-                result += "介紹：" + dict["hyperlink"] + "\n\n"
+                result += "片名:" + dict["title"] + "\n"
+                result += "介紹:" + dict["hyperlink"] + "\n\n"
 
-        if not result:
-             info +="抱歉，查無符合此分級的電。"
-        else:
-             info += result
-        return make_response(jsonify({"fulfillmentText": info}))
+    if not result:
+        info += "抱歉，查無此分級的電影"
+    else:
+        info += result
+    return make_response(jsonify({"fulfillmentText": "我是楊世堅聊天機器人," + info}))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
