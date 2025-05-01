@@ -1,0 +1,96 @@
+	<!DOCTYPE html>
+	<html lang="zh-TW">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>周攸晨簡介</title>
+		
+		<style type="text/css">
+
+	* { font-family:"標楷體"; margin-left:auto; margin-right:auto;}
+
+	h1 {color:blue; font-size:60px;}
+
+	h2 {color:#33ff33; font-size:40px;}
+
+	</style>
+
+	<script>
+
+	function change1() {
+
+		document.getElementById("pic").src = "static/mountain.jpg";
+
+		document.getElementById("h2text").innerText = "靜宜資管";
+
+	}
+
+	function change2() {
+
+		document.getElementById("pic").src = "static/cliff.jpg";
+
+		document.getElementById("h2text").innerText = "Shi-Jian Yang";
+
+	}
+
+	</script>
+	</head>
+	<body>
+		<table width="70%">
+
+	<tr>
+
+	<td>
+
+		<img src="static/cliff.jpg" width="110%" id="pic" onmouseover="change1()" onmouseout="change2()"></img>
+
+	</td>
+
+	<td>
+
+	<h1>周攸晨</h1>
+
+	<h2 id="h2text">Shi-Jian Yang</h2>
+
+	</td>
+
+	</tr>
+
+	</table>
+	<table width="70%" border="1">
+
+	<tr>
+
+	<td>
+
+		個人網頁：<a href="https://csim.pu.edu.tw">https://csim.pu.edu.tw/</a><br>
+		FB：<a href="https://www.facebook.com/?locale=zh_TW" class="text-decoration-none text-white bg-info">https://www.facebook.com/jing</a><br>
+		Tel: <a href="tel:0426328001,18110">04-26328001#18110</a><br>
+		E-Mail: <a href="mailto:mojeef2012@gmail.com">mojeef2012@gmail.com</a><br>
+
+	<td>
+		大象席地而坐電影配樂<br>
+
+	<audio controls>
+
+		<source src="static/elephant.mp3" type="audio/mP3">
+
+	</audio><br>
+	</td>
+
+	<td>
+	不要去臺灣<br>
+
+	<iframe src="https://www.youtube.com/embed/pW88QFpHXa8" allowfullscreen></iframe>
+	</td>
+
+	</tr>
+
+	</table>
+	<tr>
+	<td>
+	<iframe width="350" height="430" allow="microphone;" src="https://console.dialogflow.com/api-client/demo/embedded/04680431-92c9-42ca-a404-135410a90d7e"></iframe>
+	</td>
+	</tr>
+	</body>
+	</html>
