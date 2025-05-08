@@ -17,7 +17,7 @@ def index():
     homepage = "<h1>周攸晨Python網頁(時間+8)webhook2</h1>"
     homepage += "<a href=/mis>MIS</a><br>"
     homepage += "<a href=/today>顯示日期時間</a><br>"
-    homepage += "<a href=/welcome?nick=Yoyo&work=pu>傳送使用者暱稱</a><br>"
+    homepage += "<a href=/welcome?nick=yoyo&work=pu>傳送使用者暱稱</a><br>"
     homepage += "<a href=/account>網頁表單傳值</a><br>"
     homepage += "<a href=/about>簡介網頁</a><br>"
     homepage += "<br><a href=/read>讀取Firestore資料</a><br>"
@@ -61,10 +61,10 @@ def account():
 def read():
     Result = ""
     db = firestore.client()
-    collection_ref = db.collection("靜宜資管")
-    docs = collection_ref.order_by("mail").get()
-    for doc in docs:
-        Result += "文件內容：{}".format(doc.to_dict()) + "<br>"
+    collection_ref = db.collection("靜宜資管")    
+    docs = collection_ref.order_by("mail").get()  
+    for doc in docs:        
+        Result += "文件內容：{}".format(doc.to_dict()) + "<br>"    
     return Result
 
 @app.route("/spider")
@@ -99,8 +99,8 @@ def spider():
 
     return "資料庫已更新"
 
-@app.route("/input", methods=["GET", "POST"])
-def input():
+@app.route("/Dispmovie", methods=["GET", "POST"])
+def DispMovie():
     if request.method == "POST":
         keyword = request.form["MovieKeyword"]
         db = firestore.client()
@@ -205,7 +205,7 @@ def rate():
 
     for x in result:
         picture = x.find("img").get("src").replace(" ", "")
-        title = x.find("img").get("alt")
+        title = x.find("img").get("alt")    
         movie_id = x.find("div", class_="filmtitle").find("a").get("href").replace("/", "").replace("movie", "")
         hyperlink = "http://www.atmovies.com.tw" + x.find("a").get("href")
 
@@ -253,26 +253,13 @@ def webhook():
     # build a request object
     req = request.get_json(force=True)
     # fetch queryResult from json
-    action = req.get("queryResult").get("action")
-    info = ""
-    result = ""
-    
+    action =  req.get("queryResult").get("action")
+    #msg =  req.get("queryResult").get("queryText")
+    #info = "動作：" + action + "； 查詢內容：" + msg
+
     if (action == "rateChoice"):
         rate = req.get("queryResult").get("parameters").get("rate")
-        # 處理可能的輸入變化
-        rate_mapping = {
-            "普級": "普遍級", "普遍": "普遍級", "G級": "普遍級", "一般級": "普遍級",
-            "護級": "保護級", "P級": "保護級",
-            "輔12": "輔12級", "輔導12級": "輔12級", "輔導級": "輔12級", "F2級": "輔12級",
-            "輔15": "輔15級", "輔導15級": "輔15級", "F5級": "輔15級",
-            "限級": "限制級", "限制": "限制級", "R級": "限制級", "成人級": "限制級"
-        }
-        
-        # 如果用戶輸入的是簡稱，轉換為完整名稱
-        if rate in rate_mapping:
-            rate = rate_mapping[rate]
-            
-        info = "您選擇的電影分級是:" + rate + ", 相關電影:\n"
+        info = "您選擇的電影分級是:" + rate +", 相關電影:\n"
         db = firestore.client()
         collection_ref = db.collection("電影含分級")
         docs = collection_ref.get()
@@ -283,11 +270,10 @@ def webhook():
                 result += "片名:" + dict["title"] + "\n"
                 result += "介紹:" + dict["hyperlink"] + "\n\n"
 
-        if not result:
-            info += "抱歉，查無此分級的電影"
-        else:
-            info += result
-            
+    if not result:
+        info += "抱歉，查無此分級的電影"            
+    else:
+        info += result 
     return make_response(jsonify({"fulfillmentText": "我是周攸晨聊天機器人," + info}))
 
 

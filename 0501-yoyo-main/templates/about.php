@@ -29,7 +29,7 @@
 
 		document.getElementById("pic").src = "static/cliff.jpg";
 
-		document.getElementById("h2text").innerText = "Shi-jian Yang";
+		document.getElementById("h2text").innerText = "Shi-Jian Yang";
 
 	}
 
@@ -42,7 +42,7 @@
 
 	<td>
 
-	<img src="static/cliff.jpg" width="110%" id="pic" onmouseover="change1()" onmouseout="change2()"></img>
+		<img src="static/cliff.jpg" width="110%" id="pic" onmouseover="change1()" onmouseout="change2()"></img>
 
 	</td>
 
@@ -67,7 +67,6 @@
 		FB：<a href="https://www.facebook.com/?locale=zh_TW" class="text-decoration-none text-white bg-info">https://www.facebook.com/jing</a><br>
 		Tel: <a href="tel:0426328001,18110">04-26328001#18110</a><br>
 		E-Mail: <a href="mailto:mojeef2012@gmail.com">mojeef2012@gmail.com</a><br>
-	</td>
 
 	<td>
 		大象席地而坐電影配樂<br>

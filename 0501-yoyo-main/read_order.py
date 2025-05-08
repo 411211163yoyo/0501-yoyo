@@ -7,10 +7,11 @@ firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
-x=input("請輸入您要查詢老師的姓名:")
+
 collection_ref = db.collection("靜宜資管")
-docs = collection_ref.where(filter=FieldFilter("name","==", "周攸晨")).get()
+docs = collection_ref.order_by("mail", direction=firestore.Query.DESCENDING).limit(3).get()
 for doc in docs:
+
 
    print("文件內容：{}".format(doc.to_dict()))
 
